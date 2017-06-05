@@ -1,4 +1,4 @@
-package cm.e3mall.common.pojo;
+package cn.e3mall.common.pojo;
 
 import java.io.Serializable;
 

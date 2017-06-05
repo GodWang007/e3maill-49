@@ -9,16 +9,16 @@
 	<artifactId>e3-manager-web</artifactId>
 	<packaging>war</packaging>
 	<dependencies>
-			<dependency>
-				<groupId>cn.e3mall</groupId>
-				<artifactId>e3-manager-pojo</artifactId>
-				<version>0.0.1-SNAPSHOT</version>
-			</dependency>
-			<dependency>
-				<groupId>cn.e3mall</groupId>
-				<artifactId>e3-manager-interface</artifactId>
-				<version>0.0.1-SNAPSHOT</version>
-			</dependency>
+		<dependency>
+			<groupId>cn.e3mall</groupId>
+			<artifactId>e3-manager-pojo</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>cn.e3mall</groupId>
+			<artifactId>e3-manager-interface</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 		<!-- Spring -->
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -90,6 +90,11 @@
 		<dependency>
 			<groupId>commons-fileupload</groupId>
 			<artifactId>commons-fileupload</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
 		</dependency>
 	</dependencies>
 	<!-- 配置tomcat插件 -->
