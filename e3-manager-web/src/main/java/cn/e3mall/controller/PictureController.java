@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -25,7 +26,7 @@ public class PictureController {
 	private String imageServerURL;
 	
 	
-	@RequestMapping("/pic/upload")
+	@RequestMapping(value="/pic/upload",produces=MediaType.TEXT_PLAIN_VALUE+";chartset=utf-8")
 	@ResponseBody
 	public String  fileupload(MultipartFile uploadFile){
 		try {
