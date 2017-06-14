@@ -3,12 +3,22 @@ package cn.e3mall.service.impl;
 import java.util.Date;
 import java.util.List;
 
+import javax.annotation.Resource;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Session;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.MessageCreator;
 import org.springframework.stereotype.Service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
+import cn.e3mall.common.jedis.JedisClient;
 import cn.e3mall.common.pojo.E3Result;
 import cn.e3mall.common.pojo.EasyUIDataGridResult;
 import cn.e3mall.common.utils.IDUtils;
@@ -18,6 +28,7 @@ import cn.e3mall.pojo.TbItem;
 import cn.e3mall.pojo.TbItemDesc;
 import cn.e3mall.pojo.TbItemExample;
 import cn.e3mall.service.ItemService;
+import sun.tools.tree.FinallyStatement;
 
 /**
  * 商品管理
@@ -30,6 +41,11 @@ public class ItemServiceImpl implements ItemService {
 	private TbItemMapper itemMapper;
 	@Autowired
 	private TbItemDescMapper itemDescMapper;
+	@Autowired
+	private JmsTemplate jmsTemplate;
+	@Resource
+	private Destination topicDestination;
+
 	/**
 	 * 根据ID查询
 	 */
@@ -63,7 +79,7 @@ public class ItemServiceImpl implements ItemService {
 	 */
 	public E3Result addItem(TbItem item, String desc) {
 		//生成商品的ID
-		long itemId = IDUtils.genItemId();
+		final long itemId = IDUtils.genItemId();
 		
 		//补全item的属性
 		item.setId(itemId);
@@ -82,6 +98,13 @@ public class ItemServiceImpl implements ItemService {
 		itemDesc.setItemDesc(desc);
 		//插入到商品描述表
 		itemDescMapper.insert(itemDesc);
+		jmsTemplate.send(topicDestination, new MessageCreator() {
+			
+			public Message createMessage(Session session) throws JMSException {
+				
+				return session.createTextMessage(itemId+"");
+			}
+		});
 		//返回OK
 		return E3Result.ok();
 	}
