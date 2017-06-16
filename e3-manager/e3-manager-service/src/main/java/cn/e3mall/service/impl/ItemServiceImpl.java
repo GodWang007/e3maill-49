@@ -9,12 +9,15 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import org.apache.activemq.filter.function.regexMatchFunction;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.dubbo.rpc.protocol.thrift.ThriftUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
@@ -22,13 +25,13 @@ import cn.e3mall.common.jedis.JedisClient;
 import cn.e3mall.common.pojo.E3Result;
 import cn.e3mall.common.pojo.EasyUIDataGridResult;
 import cn.e3mall.common.utils.IDUtils;
+import cn.e3mall.common.utils.JsonUtils;
 import cn.e3mall.mapper.TbItemDescMapper;
 import cn.e3mall.mapper.TbItemMapper;
 import cn.e3mall.pojo.TbItem;
 import cn.e3mall.pojo.TbItemDesc;
 import cn.e3mall.pojo.TbItemExample;
 import cn.e3mall.service.ItemService;
-import sun.tools.tree.FinallyStatement;
 
 /**
  * 商品管理
@@ -45,13 +48,36 @@ public class ItemServiceImpl implements ItemService {
 	private JmsTemplate jmsTemplate;
 	@Resource
 	private Destination topicDestination;
-
+	@Autowired
+	private JedisClient jedisClient;
+	@Value("${item.info.expire}")
+	private Integer itemInfoExpire;
 	/**
 	 * 根据ID查询
 	 */
-	public TbItem getItemById(long itemid) {
-		TbItem tbItem = itemMapper.selectByPrimaryKey(itemid);
+	public TbItem getItemById(long itemId) {
+		//查询缓存
+		try {
+			String json = jedisClient.get("ITEM_INFO"+itemId+":BASE");
+			if (StringUtils.isNotBlank(json)) {
+				TbItem tbItem = JsonUtils.jsonToPojo(json, 	TbItem.class);
+				return tbItem;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		//如果缓存中没有   查询数据库
 		
+		TbItem tbItem = itemMapper.selectByPrimaryKey(itemId);
+		try {
+			//把结果添加到缓存
+			jedisClient.set("ITEM_INFO"+itemId+":BASE",JsonUtils.objectToJson(tbItem));
+			//设置过期时间
+			jedisClient.expire("ITEM_INFO"+itemId+":BASE", itemInfoExpire);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return tbItem;
 	}
 	/**
@@ -107,6 +133,32 @@ public class ItemServiceImpl implements ItemService {
 		});
 		//返回OK
 		return E3Result.ok();
+	}
+	/**
+	 * 根据商品id取商品描述
+	 */
+	public TbItemDesc getItemDescById(long itemId) {
+		//查询缓存
+		try {
+			String json = jedisClient.get("ITEM_INFO"+itemId+":DESC");
+			if (StringUtils.isNotBlank(json)) {
+				TbItemDesc tbItemDesc = JsonUtils.jsonToPojo(json, 	TbItemDesc.class);
+				return tbItemDesc;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		TbItemDesc tbItemDesc = itemDescMapper.selectByPrimaryKey(itemId);
+		try {
+			//把结果添加到缓存
+			jedisClient.set("ITEM_INFO"+itemId+":DESC",JsonUtils.objectToJson(tbItemDesc));
+			//设置过期时间
+			jedisClient.expire("ITEM_INFO"+itemId+":DESC", itemInfoExpire);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return tbItemDesc;
 	}
 	
 }
